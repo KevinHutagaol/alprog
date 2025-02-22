@@ -11,6 +11,7 @@ int main(void) {
     }
 }
 
+
 void shift_ascii(char *s) {
     for (; *s; s++) {
         // kalo dia 'z' di shift jadi 'a'
