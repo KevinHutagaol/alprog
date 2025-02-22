@@ -440,7 +440,7 @@ int **scan_matrix(size_t *rows, size_t *cols) {
 ```
 
 SS Output Program Kalian :
-![Output Program](https://hackmd.io/_uploads/Hyfs0jJ5kl.png)
+![Output Program](https://hackmd.io/_uploads/B1pV-K1qye.png)
 
 ### 2. Buatlah sebuah program yang mengenkripsi isi dari array berikut dengan melakukan shifting sebanyak 1 kali. (30 poin)
 
