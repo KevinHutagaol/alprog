@@ -39,7 +39,7 @@ void get_name(char **name) {
     for (;;) {
         int ch = getchar();
 
-        if (i + 1 > current_name_length) {
+        if (i + 1 > current_name_length) {;
             current_name_length++;
             char *temp = (char *) realloc(*name, current_name_length * sizeof(char));
 

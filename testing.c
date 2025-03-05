@@ -1,49 +1,68 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-int max(int *a, int n) {
-    int i, max;
-    max = a[0];
+void name_input(char * name, int * size);
+int count(char * name, int * size);
 
-    for (i = 1; i < n; i++) {
-        if (a[i] > max) {
-            max = a[i];
+int size = 2;
+int main() {
+    char name_temp[50];
+    printf("Masukkan nama Anda:\n\n");
+
+    char * name = malloc(2 * sizeof(char));
+
+    name_input(name, &size);
+
+
+    while (1) {
+
+        printf("\nOpsi (Nama: %s)\n", name);
+        printf("a. Value Nama ASCII\nb. Ganti Nama\nc. Exit\n\n");
+        char option;
+        scanf(" %c", &option);
+        while (getchar() != '\n');
+
+        if (option == 'a') {
+            int x = count(name, &size);
+            printf("\nValue nama Anda adalah: %d\n\n", x);
+        } else if (option == 'b') {
+            printf("Masukkan nama Anda:\n\n");
+            name_input(name, &size);
+        } else if (option == 'c') {
+            printf("Program Diselesaikan\n");
+            break;
         }
     }
 
-    return max;
+    free(name);
+    return 0;
 }
 
-int main() {
-    // int arr[3] = {1,2,3};
-    // int i = 0, j = 1;
-    //
-    // while (i < 3) {
-    //     if (arr[i] % j == 0) {
-    //         printf("%d ", arr[i]);
-    //     }
-    //     i++;
-    //     j++;
-    // }
+void name_input(char * name, int * size) {
+    int i = 0;
+    while (1) {
+        char holder = getchar();
+        if (holder == '\n') {
+            name[i] = '\0';
+            *size = i + 1;
+            break;
+        }
+        name = realloc(name, (i+2) * sizeof(char));
+        name[i] = holder;
+        i++;
+    }
+}
 
-    // int i, j, k = 5;
-    //
-    // for (i = 1; i <= 5; i++) {
-    //     for (j = 1 ; j <= k; j++) {
-    //         printf(" ");
-    //     }
-    //
-    //     for (j = 1; j <= (2*i - 1); j++) {
-    //         printf("*");
-    //     }
-    //
-    //     printf("\n");
-    //     k--;
-    // }
+int count(char * name, int * size) {
+    int value = 0;
+    for (int i = 0; i <= *size; i++) {
+        value += (int) name[i];
+    }
 
-    int size = 10;
-    int arr[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    return value;
+}
 
-    int max_val = max(arr, size);
+int val(char*** list_of_str) {
 
-    printf("%d", max_val);
 }
