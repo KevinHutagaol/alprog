@@ -1,0 +1,42 @@
+[
+  {
+    "nama": "Budi Santoso",
+    "usia": 22,
+    "ipk": 3.75,
+    "status": "Aktif",
+    "matakuliah": [
+      "Matematika",
+      "Fisika"
+    ]
+  },
+  {
+    "nama": "Siti Rahmawati",
+    "usia": 21,
+    "ipk": 3.65,
+    "status": "Cuti",
+    "matakuliah": [
+      "Rangkaian Listrik",
+      "Rangkaian Elektronik"
+    ]
+  },
+  {
+    "nama": "Agus Wijaya",
+    "usia": 24,
+    "ipk": 3.68,
+    "status": "Lulus",
+    "matakuliah": [
+      "Aljabar Linear",
+      "Kalkulus"
+    ]
+  },
+  {
+    "nama": "Sari Sariwati",
+    "usia": 22,
+    "ipk": 3.66,
+    "status": "Lulus",
+    "matakuliah": [
+      "Rangkaian Listrik",
+      "Kalkulus 2"
+    ]
+  }
+]
