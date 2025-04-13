@@ -140,3 +140,4 @@ int is_number_well_balanced(char_node *head) {
     printf("Output: true\n");
     return 1;
 }
+
