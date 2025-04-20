@@ -7,55 +7,168 @@ NPM   : 2306156763
 
 > Catatan: Soal Programming tidak perlu mencantumkan referensi, hanya soal Teori saja yang memerlukan referensi minimal
 
-2.
-
 ## Teori
 
 ### 1. Pilih dua dari algoritma sorting berikut: Bubble Sort, Selection Sort, Insertion Sort, dan jelaskan cara kerjanya! Juga, jelaskan perbedaan di antara mereka! (15 poin)
 
-[your answer here]
+### Bubble Sort:
+
+--- 
+
+Bubble sort mengiterasikan dua buah elemen berurutan pada array dan membaliknya jika urutannya tidak benar.
+
+- Bubble sort mengcompare setiap elemen dengan semua elemen setelahnya, sehingga dibutuhkan double for loop.
+
+- Jika semua elemen telah dicompare dan di tukar, maka array akan terurut.
+
+**Time complexity:**
+
+$$ \begin{align}
+\text{Worst Case} &: O(n^2) \\
+\text{Best Case} &: O(n) \\
+\text{Average Case} &: O(n^2) \\
+\end{align}
+$$
+
+![bubble-sort](https://hackmd.io/_uploads/BJa43W9C1g.png)
+
+### Selection Sort:
+
+Selection sort merupakan algoritma yang memilih elemen terkecil dari array dan meletakannya di awal array:
+
+- Elemen pertama merupakan minimum
+- Bandingkan minimum dengan elemen setelahnya, jika lebih kecil, maka elemen tersebut menjadi minimum baru.
+- Lanjutkan perbandingan elemen minimum dengan elemen setelahnya.
+- Setelah semua nilai telah di cek, pindah nilai minium ke awal array
+- Lakukan hingga semua elemen telah tersortir, iterasi selanjutnya tidak menghitung elemen yang sebelumnya sudah
+  diurutkan
+
+![Selection Sort](https://hackmd.io/_uploads/SJiSAb90Jg.png)
+
+**Time complexity:**
+
+$$ \begin{align}
+\text{Worst Case} &: O(n^2) \\
+\text{Best Case} &: O(n^2) \\
+\text{Average Case} &: O(n^2) \\
+\end{align}
+$$
 
 #### Referensi
 
-- Contoh Situs [Online]. Available: <https://www.myWebsite.com/ilovedigilab/>. [Diakses: 25-Agustus-2024]
-- Contoh Situs [Online]. Available: <https://www.myWebsite.com/ilovedigilab/>. [Diakses: 25-Agustus-2024]
+- [1] “Bubble Sort (With Code in Python/C++/Java/C).”  [Online].
+  Available: https://www.programiz.com/dsa/bubble-sort [Accessed: Apr. 14, 2025]
+- [2] “Selection Sort (With Code in Python/C++/Java/C).” [Online].
+  Available: https://www.programiz.com/dsa/selection-sort [Accessed: Apr. 14, 2025]
+- [3] A. M. Tenenbaum, Y. Langsam, and M. Augenstein, "Sorting" in _Data structures using C_. Englewood Cliffs, N.J:
+  Prentice Hall, 1990.
 
 ---
 
 ### 2. Pilih salah satu dari algoritma sorting berikut: Quick Sort, Merge Sort, dan jelaskan cara kerjanya! Juga, jelaskan perbedaan algoritma ini dengan algoritma sorting pada soal nomor 1! (12 poin)
 
-[your answer here]
+### Quick Sort:
+
+- Algoritmaa quick sort merupakan alogoritma yang mengunakan metode _divide and conquer_ secara rekursif untuk melakukan
+  sorting.
+
+- Algoritma ini pertama memilih sebuah _pivot_ dengan tujuan untuk membagi dua array. Pivot akan diletakan sedemikian
+  rupa
+  agar semua nilai disebelah kiri pivot akan bernilai lebih kecil dari pivot, dan semua nilai yang disebelah kanan pivot
+  bernilai lebih besar dari pivot.
+
+- Proses ini akan dilakukan secara recursif untuk tiap bagian kiri dan kanan pivot, hingga tidak dapat dibagi lagi (sisa
+  hanya pivotnya). Setelah hal ini terjadi maka array sudah akan terurut.
+
+Sistem divide and conquer dari quick sort:
+![quicksort](https://hackmd.io/_uploads/ryRGJ-90Jx.png)
+
+**Time complexity:**
+
+#### Pembagian array dilakukan seperti berikut:
+
+- Pivot akan dicompare dengan elemen pertama di array. Jika elemen tersebut lebih besar dari pivot, maka akan di set
+  sebagai temp.
+
+- Pivot lalu akan dicompare dengan elemen setelahnya di array. Jika elemen tersebut lebih kecil dari pivot, maka akan di
+  swap dengan temp.
+
+- Proses ini dilakukan hingga mencapai pivot, dimana pivot akan ditukar dengan temp variabel tersebut.
+
+$$ \begin{align}
+\text{Worst Case} &: O(n^2) \\
+\text{Best Case} &: O(n\log(n)) \\
+\text{Average Case} &: O(n\log(n)) \\
+\end{align}
+$$
 
 #### Referensi
 
-- Contoh Situs [Online]. Available: <https://www.myWebsite.com/ilovedigilab/>. [Diakses: 25-Agustus-2024]
-- Contoh Situs [Online]. Available: <https://www.myWebsite.com/ilovedigilab/>. [Diakses: 25-Agustus-2024]
+- [4] “QuickSort (With Code in Python/C++/Java/C).” [Online].
+  Available: https://www.programiz.com/dsa/quick-sort [Accessed: Apr. 14, 2025]
+- [5] A. M. Tenenbaum, Y. Langsam, and M. Augenstein, "Sorting" in _Data structures using C_. Englewood Cliffs, N.J:
+  Prentice Hall, 1990.
 
 ---
 
 ### 3. Jelaskan secara singkat algoritma sorting selain yang disebutkan pada pertanyaan sebelumnya! (10 poin)
 
-[your answer here]
+Radix sort merupakan algoritma yang mengelompokan elemen dari digit yang berada di posisi yang sama, lalu mengurutkan
+elemen-elemen tersebut.
+
+- Tentukan nilai terbesar dari array, dan ditentukan jumlah digit dari nilai max tersebut (N).
+- Dimulai dari digit terbesar (N), akan digunakan algoritma sorting stable lainnya untuk mengurutkan elemen.
+- Setelah itu diurutkan elemen di digit sebelumnya, hingga ke digit satuan.
 
 #### Referensi
 
-- Contoh Situs [Online]. Available: <https://www.myWebsite.com/ilovedigilab/>. [Diakses: 25-Agustus-2024]
-- Contoh Situs [Online]. Available: <https://www.myWebsite.com/ilovedigilab/>. [Diakses: 25-Agustus-2024]
+- [6] “Radix Sort (With Code in Python, C++, Java and C).”  [Online].
+  Available: https://www.programiz.com/dsa/radix-sort [Accessed: Apr. 14, 2025]
+- [7] A. M. Tenenbaum, Y. Langsam, and M. Augenstein, "Sorting" in _Data structures using C_. Englewood Cliffs, N.J:
+  Prentice Hall, 1990.
 
 ---
 
 ### 4. Jelaskan cara mengurutkan array angka dalam urutan naik dan turun dalam C (12 poin)
 
-[your answer here]
+Algoritma sorting akan selalu bergantung pada komparasi nilai untuk menentukan elemen mana yang berada di depan atau
+dibelakang, dalam sorting array angka, fungsi ini sekedar operator ($>$) dan ($<$). Jika pada algoritma sorting yang
+akan mensort secara naik menggunakan $>$ sebagai comparasinya, maka $<$ akan menandakan sort turun. 
 
-```c
-kode Anda di sini
+```c++
+void bubble_sort_ascending(int array[], int size) {
+  for (int step = 0; step < size - 1; ++step) {
+    for (int i = 0; i < size - step - 1; ++i) {
+    // Komparasi antara nilai yang menghasilkan ascending
+      if (array[i] > array[i + 1]) {
+        int temp = array[i];
+        array[i] = array[i + 1];
+        array[i + 1] = temp;
+      }
+    }
+  }
+}
+
+void bubble_sort_descending(int array[], int size) {
+  for (int step = 0; step < size - 1; ++step) {
+    for (int i = 0; i < size - step - 1; ++i) {
+    // Komparasi antara nilai yang menghasilkan descending
+      if (array[i] < array[i + 1]) {
+        int temp = array[i];
+        array[i] = array[i + 1];
+        array[i + 1] = temp;
+      }
+    }
+  }
+}
 ```
 
 #### Referensi
 
-- Contoh Situs [Online]. Available: <https://www.myWebsite.com/ilovedigilab/>. [Diakses: 25-Agustus-2024]
-- Contoh Situs [Online]. Available: <https://www.myWebsite.com/ilovedigilab/>. [Diakses: 25-Agustus-2024]
+- [8] “Bubble Sort (With Code in Python/C++/Java/C).”  [Online].
+  Available: https://www.programiz.com/dsa/bubble-sort [Accessed: Apr. 14, 2025]
+- [9] A. M. Tenenbaum, Y. Langsam, and M. Augenstein, "Sorting" in _Data structures using C_. Englewood Cliffs, N.J:
+  Prentice Hall, 1990.
 
 ---
 
@@ -126,8 +239,9 @@ void bubble_sort_generic(void *array, size_t member_size, int array_size, int (*
         for (int i = 0; i < array_size - step - 1; ++i) {
             void *arr1 = &array[i * member_size];
             void *arr2 = &array[(i + 1) * member_size];
-
+            // fungsi compare berasal dari luar function ini (parameter)
             if (compare(arr1, arr2) > 0) {
+                // memcpy untuk swap karena menggunakan void pointer
                 char temp[member_size];
                 memcpy(temp, arr2, member_size);
                 memcpy(arr2, arr1, member_size);
@@ -150,8 +264,10 @@ bubble_sort_generic(players, member_size, array_size, compare_player_rank);
 
 #### Referensi
 
-- Contoh Situs [Online]. Available: <https://www.myWebsite.com/ilovedigilab/>. [Diakses: 25-Agustus-2024]
-- Contoh Situs [Online]. Available: <https://www.myWebsite.com/ilovedigilab/>. [Diakses: 25-Agustus-2024]
+- [10] “Bubble Sort (With Code in Python/C++/Java/C).”  [Online].
+  Available: https://www.programiz.com/dsa/bubble-sort [Accessed: Apr. 14, 2025]
+- [11] A. M. Tenenbaum, Y. Langsam, and M. Augenstein, "Sorting" in _Data structures using C_. Englewood Cliffs, N.J:
+  Prentice Hall, 1990.
 
 ---
 
