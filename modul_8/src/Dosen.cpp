@@ -17,3 +17,4 @@ void Dosen::setName(string name) {
 void Dosen::setId(int id) {
     this->id = id;
 }
+

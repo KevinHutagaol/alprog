@@ -32,3 +32,4 @@ void Kelas::setSks(int sks) {
 void Kelas::setNamaKelas(string namaKelas) {
     this->namaKelas = namaKelas;
 }
+
