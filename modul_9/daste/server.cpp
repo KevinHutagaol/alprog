@@ -4,7 +4,7 @@
 
 using namespace std;
 
-#define PORT 8888
+#define PORT 6969
 
 int main() {
     WSADATA wsa;

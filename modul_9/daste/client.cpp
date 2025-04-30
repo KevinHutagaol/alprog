@@ -5,7 +5,7 @@
 using namespace std;
 
 #define SERVER "127.0.0.1"
-#define PORT 8888
+#define PORT 6969
 
 int main() {
     WSADATA wsa;
