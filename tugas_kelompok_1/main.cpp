@@ -1,9 +1,13 @@
 #include <iostream>
 #include <cstring>
+#include <utility>
 #include <vector>
 #include <optional>
 #include <functional>
-
+#include <algorithm>
+#include <memory>
+#include <fstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -29,8 +33,116 @@ typedef struct {
     optional<SortBy> sort_by = nullopt;
     optional<int> num_to_display = nullopt;
     bool descending = false;
-} SortingSettings;
+} SorterSettings;
 
+enum class CSVState {
+    UnquotedField,
+    QuotedField,
+    QuotedQuote
+};
+
+class csvReader {
+public:
+    static vector<vector<string> > readCSV(istream &in) {
+        vector<vector<string> > table;
+        string row;
+        while (!in.eof()) {
+            getline(in, row);
+            if (in.bad() || in.fail()) {
+                break;
+            }
+            auto fields = readCSVRow(row);
+            table.push_back(fields);
+        }
+        return table;
+    }
+
+private:
+    static vector<string> readCSVRow(const string &row) {
+        CSVState state = CSVState::UnquotedField;
+        vector<string> fields{""};
+        size_t i = 0; // index of the current field
+        for (char c: row) {
+            switch (state) {
+                case CSVState::UnquotedField:
+                    switch (c) {
+                        case ',': // end of field
+                            fields.emplace_back("");
+                            i++;
+                            break;
+                        case '"': state = CSVState::QuotedField;
+                            break;
+                        default: fields[i].push_back(c);
+                            break;
+                    }
+                    break;
+                case CSVState::QuotedField:
+                    switch (c) {
+                        case '"': state = CSVState::QuotedQuote;
+                            break;
+                        default: fields[i].push_back(c);
+                            break;
+                    }
+                    break;
+                case CSVState::QuotedQuote:
+                    switch (c) {
+                        case ',': // , after closing quote
+                            fields.emplace_back("");
+                            i++;
+                            state = CSVState::UnquotedField;
+                            break;
+                        case '"': // "" -> "
+                            fields[i].push_back('"');
+                            state = CSVState::QuotedField;
+                            break;
+                        default: // end of quote
+                            state = CSVState::UnquotedField;
+                            break;
+                    }
+                    break;
+            }
+        }
+        return fields;
+    }
+};
+
+struct City {
+    string name, country;
+    double lat, lon;
+    long population;
+
+    static vector<City> get_cities_csv(const string &file_path) {
+        vector<City> cities;
+        fstream file(file_path);
+        auto raw_data = csvReader::readCSV(file);
+
+
+        for (const auto &row: raw_data) {
+            try {
+                cities.emplace_back(City{
+                    .name = row[1],
+                    .country = row[4],
+                    .lat = stod(row[2]),
+                    .lon = stod(row[3]),
+                    .population = stol(row[9]),
+                });
+            } catch (...) {
+            }
+        }
+
+        return cities;
+    };
+};
+
+ostream &operator<<(ostream &os, const City &city) {
+    os << "City => ";
+    os << "Name: " << setfill(' ') << setw(20) << left << city.name << ", ";
+    os << "Country: " << setfill(' ') << setw(20) << left << city.country << ", ";
+    os << "Lat: " << setfill(' ') << setw(9) << right << fixed << showpoint << setprecision(4) << city.lat << ", ";
+    os << "Lon: " << setfill(' ') << setw(9) << right << fixed << showpoint << setprecision(4) << city.lon << ", ";
+    os << "Population: "  << fixed << showpoint << setprecision(4) << city.population << ", ";
+    return os;
+}
 
 class CLIParser {
 public:
@@ -85,8 +197,8 @@ public:
         cout << this->descending << endl;
     }
 
-    [[nodiscard]] SortingSettings get_sorting_settings() const {
-        return SortingSettings {
+    [[nodiscard]] SorterSettings get_sorter_settings() const {
+        return SorterSettings{
             .sorting_algorithms = this->sort_algorithm, .sort_by = this->sort_by,
             .num_to_display = this->num_to_display, .descending = this->descending
         };
@@ -122,7 +234,7 @@ private:
             this->sort_by.emplace(SortBy::LON);
             return;
         }
-        cout << "SORT BY KEY " << str << " NOT AVAILABLE" << endl;
+        cerr << "Sort by key " << str << " is not supported" << endl;
     }
 
     void set_sort_algorithm(const string &str) {
@@ -150,7 +262,7 @@ private:
             this->sort_algorithm.emplace(SortAlgorithms::STD);
             return;
         }
-        cout << "SORTING ALGORITHM " << str << " NOT SUPPORTED" << endl;
+        cerr << "Sorting algorithm " << str << " is not supported" << endl;
     }
 };
 
@@ -159,69 +271,207 @@ class Sorter {
 public:
     virtual ~Sorter() = default;
 
-    Sorter(vector<T> data, std::function<int(T, T)> cmp_fn): data(data), cmp_fn(cmp_fn) {
+    Sorter(const function<bool(const T &, const T &)> &cmp_fn,
+           const SorterSettings &sorter_settings): cmp_fn(cmp_fn),
+                                                   sorter_settings(sorter_settings) {
     };
 
-    virtual void sort() = 0;
+    virtual void sort(vector<T> &data) = 0;
 
-private:
-    vector<T> data;
-    std::function<int(T, T)> cmp_fn;
+    [[nodiscard]] bool correct_sorting(const vector<T> &data) const {
+        return is_sorted(data.begin(), data.end(), cmp_fn);
+    }
+
+    void print_sorted_data(vector<T> &data) const {
+        int N;
+
+        if (this->sorter_settings.num_to_display.has_value() &&
+            this->sorter_settings.num_to_display.value() <= data.size()) {
+            N = this->sorter_settings.num_to_display.value();
+        } else {
+            N = data.size();
+        }
+        for (int i = 0; i < N; i++) {
+            cout << data[i] << endl;
+        }
+    }
+
+protected:
+    function<bool(const T &, const T &)> cmp_fn;
+    SorterSettings sorter_settings;
 };
 
 template<typename T>
-class BubbleSorter : public Sorter<T> {
+class BubbleSorter final : public Sorter<T> {
 public:
-    void sort() override {
+    BubbleSorter(const function<bool(const T &, const T &)> &cmp_fn,
+                 const SorterSettings &sorter_settings): Sorter<T>(cmp_fn, sorter_settings) {
+    };
+
+    // TODO: Bubble Sort Implementation
+    void sort(vector<T> &data) override {
     }
 };
 
 template<typename T>
-class InsertionSorter : public Sorter<T> {
+class InsertionSorter final : public Sorter<T> {
 public:
-    void sort() override {
+    InsertionSorter(const function<bool(const T &, const T &)> &cmp_fn,
+                    const SorterSettings &sorter_settings): Sorter<T>(cmp_fn, sorter_settings) {
+    };
+
+    // TODO: Insertion Sort Implementation
+    void sort(vector<T> &data) override {
     }
 };
 
 template<typename T>
-class MergeSorter : public Sorter<T> {
+class MergeSorter final : public Sorter<T> {
 public:
-    void sort() override {
+    MergeSorter(const function<bool(const T &, const T &)> &cmp_fn,
+                const SorterSettings &sorter_settings): Sorter<T>(cmp_fn, sorter_settings) {
+    };
+
+    // TODO: Merge Sort Implementation
+    void sort(vector<T> &data) override {
     }
 };
 
 template<typename T>
-class QuickSorter : public Sorter<T> {
+class QuickSorter final : public Sorter<T> {
 public:
-    void sort() override {
+    QuickSorter(const function<bool(const T &, const T &)> &cmp_fn,
+                const SorterSettings &sorter_settings): Sorter<T>(cmp_fn, sorter_settings) {
+    };
+
+    // TODO: Quick Sort Implementation
+    void sort(vector<T> &data) override {
     }
 };
 
 template<typename T>
-class HeapSorter : public Sorter<T> {
+class HeapSorter final : public Sorter<T> {
 public:
-    void sort() override {
+    HeapSorter(const function<bool(const T &, const T &)> &cmp_fn,
+               const SorterSettings &sorter_settings): Sorter<T>(cmp_fn, sorter_settings) {
+    };
+
+    // TODO: Heap Sort Implementation
+    void sort(vector<T> &data) override {
     }
 };
 
 template<typename T>
-class StdSorter : public Sorter<T> {
+class StdSorter final : public Sorter<T> {
 public:
-    void sort() override {
+    StdSorter(const function<bool(const T &, const T &)> &cmp_fn,
+              const SorterSettings &sorter_settings): Sorter<T>(cmp_fn, sorter_settings) {
+    };
+
+    void sort(vector<T> &data) override {
+        std::sort(data.begin(), data.end(), this->cmp_fn);
     }
 };
 
 template<typename T>
 class SorterFactory {
 public:
-    SorterFactory(SortingSettings sorter_settings) {};
+    explicit SorterFactory(const SorterSettings &sorter_settings): sorter_settings(sorter_settings) {
+    };
+
+    [[nodiscard]] std::unique_ptr<Sorter<City> > createSorter() {
+        static_assert(sizeof(T) == 0, "NOT IMPLEMENTED");
+        return nullptr;
+    }
 
 private:
-    SortingSettings sorter_settings;
+    SorterSettings sorter_settings;
+};
 
+template<>
+class SorterFactory<City> {
+public:
+    explicit SorterFactory(const SorterSettings &sorter_settings): sorter_settings(sorter_settings) {
+    };
+
+    [[nodiscard]] std::unique_ptr<Sorter<City> > createSorter() {
+        function<bool(const City &, const City &)> cmp_fn;
+        if (!this->sorter_settings.sorting_algorithms.has_value()) {
+            cerr << "No Sorting Algorithm is provided to SorterFactory" << endl;
+            return nullptr;
+        }
+        if (!this->sorter_settings.sort_by.has_value()) {
+            cerr << "No Sorting Key is provided to SorterFactory" << endl;
+            return nullptr;
+        }
+        switch (this->sorter_settings.sort_by.value()) {
+            case SortBy::NAME: {
+                cmp_fn = [&](const City &a, const City &b) {
+                    return sorter_settings.descending ? (a.name > b.name) : (a.name < b.name);
+                };
+                break;
+            }
+            case SortBy::COUNTRY: {
+                cmp_fn = [&](const City &a, const City &b) {
+                    return sorter_settings.descending ? (a.country > b.country) : (a.country < b.country);
+                };
+                break;
+            }
+            case SortBy::LAT: {
+                cmp_fn = [&](const City &a, const City &b) {
+                    return sorter_settings.descending ? (a.lat > b.lat) : (a.lat < b.lat);
+                };
+                break;
+            }
+            case SortBy::LON: {
+                cmp_fn = [&](const City &a, const City &b) {
+                    return sorter_settings.descending ? (a.lon > b.lon) : (a.lon < b.lon);
+                };
+                break;
+            }
+            case SortBy::POPULATION: {
+                cmp_fn = [&](const City &a, const City &b) {
+                    return sorter_settings.descending ? (a.population > b.population) : (a.population < b.population);
+                };
+                break;
+            }
+        }
+
+        switch (this->sorter_settings.sorting_algorithms.value()) {
+            case SortAlgorithms::BUBBLE:
+                return std::make_unique<BubbleSorter<City> >(cmp_fn, this->sorter_settings);
+            case SortAlgorithms::INSERTION:
+                return std::make_unique<InsertionSorter<City> >(cmp_fn, this->sorter_settings);
+            case SortAlgorithms::MERGE:
+                return std::make_unique<MergeSorter<City> >(cmp_fn, this->sorter_settings);
+            case SortAlgorithms::QUICK:
+                return std::make_unique<QuickSorter<City> >(cmp_fn, this->sorter_settings);
+            case SortAlgorithms::HEAP:
+                return std::make_unique<HeapSorter<City> >(cmp_fn, this->sorter_settings);
+            case SortAlgorithms::STD:
+                return std::make_unique<StdSorter<City> >(cmp_fn, this->sorter_settings);
+        }
+        return nullptr;
+    }
+
+private:
+    SorterSettings sorter_settings;
 };
 
 int main(const int argc, char *argv[]) {
-    CLIParser parser(argc, argv);
-    parser.print_settings();
+    auto data = City::get_cities_csv(R"(.\worldcities.csv)");
+
+    const CLIParser parser(argc, argv);
+    const SorterSettings sorter_settings = parser.get_sorter_settings();
+
+    SorterFactory<City> sorter_factory(sorter_settings);
+
+    const auto sorter = sorter_factory.createSorter();
+
+    sorter->sort(data);
+    sorter->print_sorted_data(data);
+
+    cout << "Hello World" << endl;
+
+    return 0;
 }
