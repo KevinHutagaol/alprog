@@ -7,6 +7,8 @@
 #include <memory>
 #include <fstream>
 #include <iomanip>
+#include <chrono>
+#include <random>
 
 
 enum class SortAlgorithms {
@@ -113,7 +115,7 @@ struct City {
         std::vector<City> cities;
         std::fstream file(file_path);
         if (!file.is_open()) {
-            std::cerr << "Could not open file " << file_path << std::endl;
+            std::cerr << "Error: Could not open file " << file_path << std::endl;
             return cities;
         }
         auto raw_data = csvReader::readCSV(file);
@@ -128,7 +130,11 @@ struct City {
                     stod(row[3]),
                     stol(row[9]),
                 });
-            } catch (...) {
+                // TODO: silence parsing csv
+            } catch (std::invalid_argument const &ex) {
+                // std::cerr << "Error: invalid_argument when parsing city csv: " << ex.what() << '\n';
+            } catch (std::out_of_range const &ex) {
+                // std::cerr << "Error: out_of_range when parsing city csv: " << ex.what() << '\n';
             }
         }
 
@@ -160,7 +166,7 @@ public:
         for (int i = 1; i < argc; i++) {
             if (strstr(argv[i], "-a")) {
                 if (i + 1 >= argc) {
-                    std::cerr << "Option " << argv[i] << " requires a value" << std::endl;
+                    std::cerr << "Error: Option " << argv[i] << " requires a value" << std::endl;
                 } else {
                     std::string str(argv[i + 1]);
                     for (auto &ch: str) {
@@ -174,7 +180,7 @@ public:
 
             if (strstr(argv[i], "-k")) {
                 if (i + 1 >= argc) {
-                    std::cerr << "Option " << argv[i] << " requires a value" << std::endl;
+                    std::cerr << "Error: Option " << argv[i] << " requires a value" << std::endl;
                 } else {
                     std::string str(argv[i + 1]);
                     for (auto &ch: str) {
@@ -188,13 +194,16 @@ public:
 
             if (strstr(argv[i], "-n")) {
                 if (i + 1 >= argc) {
-                    std::cerr << "Option " << argv[i] << " requires a value" << std::endl;
+                    std::cerr << "Error: Option " << argv[i] << " requires a value" << std::endl;
                 } else {
                     try {
                         int temp = std::stoi(argv[i + 1]);
                         this->num_to_display.emplace(temp);
                         i++;
-                    } catch (...) {
+                    } catch (std::invalid_argument const &ex) {
+                        std::cerr << "Error: invalid_argument when parsing CLI arguments" << ex.what() << '\n';
+                    } catch (std::out_of_range const &ex) {
+                        std::cerr << "Error: out_of_range when parsing CLI arguments" << ex.what() << '\n';
                     }
                 }
                 continue;
@@ -259,7 +268,7 @@ private:
             this->sort_by.emplace(SortBy::LON);
             return;
         }
-        std::cerr << "Sort by key " << str << " is not supported" << std::endl;
+        std::cerr << "Error: Sort by key " << str << " is not supported" << std::endl;
     }
 
     void set_sort_algorithm(const std::string &str) {
@@ -287,7 +296,7 @@ private:
             this->sort_algorithm.emplace(SortAlgorithms::STD);
             return;
         }
-        std::cerr << "Sorting algorithm " << str << " is not supported" << std::endl;
+        std::cerr << "Error: Sorting algorithm " << str << " is not supported" << std::endl;
     }
 };
 
@@ -303,15 +312,53 @@ public:
 
     virtual void sort(std::vector<T> &data) = 0;
 
+    std::chrono::microseconds sort_with_time(std::vector<T> &data) {
+        const auto start = std::chrono::steady_clock::now();
+        this->sort(data);
+        const auto end = std::chrono::steady_clock::now();
+        return std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    }
+
+    std::chrono::microseconds benchmark_sort_duration(const std::vector<T> &data, int num_iterations) {
+        auto average_duration = std::chrono::microseconds(0);
+
+        std::cout << "\nBenchmark sorting..." << std::endl;
+        auto rng = std::default_random_engine{std::random_device{}()};
+        for (int i = 0; i < num_iterations; i++) {
+            if (i % 10 == 0 || i == num_iterations - 1) {
+                int len_num = static_cast<int>(std::to_string(num_iterations - 1).size());
+                std::stringstream ss{};
+                ss << "\r";
+                ss << "Benchmarking (Iteration: ";
+                ss << std::setfill(' ') << std::setw(len_num) << std::right << std::to_string(i) << "/";
+                ss << std::to_string(num_iterations - 1) << ")";
+
+                std::cout << ss.str();
+                std::cout << std::flush;
+            }
+            std::vector<T> data_copy(data);
+            std::shuffle(data_copy.begin(), data_copy.end(), rng);
+
+            const auto start = std::chrono::steady_clock::now();
+            this->sort(data_copy);
+            const auto end = std::chrono::steady_clock::now();
+
+            average_duration += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        }
+        std::cout << std::endl;
+
+        return average_duration / num_iterations;
+    }
+
     [[nodiscard]] bool correct_sorting(const std::vector<T> &data) const {
-        return std::is_sorted(data.begin(), data.end(), cmp_fn);
+        return std::is_sorted(data.begin(), data.end(), this->cmp_fn);
     }
 
     void print_sorted_data(const std::vector<T> &data) const {
         size_t N = data.size();
 
         if (this->sorter_settings.num_to_display.has_value()) {
-            if (const int num = this->sorter_settings.num_to_display.value(); num > 0) {
+            if (const int num = this->sorter_settings.num_to_display.value(); num >= 0) {
                 N = std::min(data.size(), static_cast<size_t>(num));
             }
         }
@@ -334,6 +381,14 @@ public:
 
     // TODO: Bubble Sort Implementation
     void sort(std::vector<T> &data) override {
+        const int n = data.size();
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (this->cmp_fn(data[j + 1], data[j])) {
+                    std::swap(data[j], data[j + 1]);
+                }
+            }
+        }
     }
 };
 
@@ -344,8 +399,18 @@ public:
                     const SorterSettings &sorter_settings): Sorter<T>(cmp_fn, sorter_settings) {
     };
 
-    // TODO: Insertion Sort Implementation
     void sort(std::vector<T> &data) override {
+        const int n = data.size();
+        for (int i = 1; i < n; ++i) {
+            auto key = data[i];
+            int j = i - 1;
+
+            while (j >= 0 && this->cmp_fn(key, data[j])) {
+                data[j + 1] = data[j];
+                j = j - 1;
+            }
+            data[j + 1] = key;
+        }
     }
 };
 
@@ -428,34 +493,35 @@ public:
             std::cerr << "No Sorting Key is provided to SorterFactory" << std::endl;
             return nullptr;
         }
+        bool is_descending = this->sorter_settings.descending;
         switch (this->sorter_settings.sort_by.value()) {
             case SortBy::NAME: {
-                cmp_fn = [&](const City &a, const City &b) {
-                    return sorter_settings.descending ? (a.name > b.name) : (a.name < b.name);
+                cmp_fn = [=](const City &a, const City &b) {
+                    return is_descending ? (a.name > b.name) : (a.name < b.name);
                 };
                 break;
             }
             case SortBy::COUNTRY: {
-                cmp_fn = [&](const City &a, const City &b) {
-                    return sorter_settings.descending ? (a.country > b.country) : (a.country < b.country);
+                cmp_fn = [=](const City &a, const City &b) {
+                    return is_descending ? (a.country > b.country) : (a.country < b.country);
                 };
                 break;
             }
             case SortBy::LAT: {
-                cmp_fn = [&](const City &a, const City &b) {
-                    return sorter_settings.descending ? (a.lat > b.lat) : (a.lat < b.lat);
+                cmp_fn = [=](const City &a, const City &b) {
+                    return is_descending ? (a.lat > b.lat) : (a.lat < b.lat);
                 };
                 break;
             }
             case SortBy::LON: {
-                cmp_fn = [&](const City &a, const City &b) {
-                    return sorter_settings.descending ? (a.lon > b.lon) : (a.lon < b.lon);
+                cmp_fn = [=](const City &a, const City &b) {
+                    return is_descending ? (a.lon > b.lon) : (a.lon < b.lon);
                 };
                 break;
             }
             case SortBy::POPULATION: {
-                cmp_fn = [&](const City &a, const City &b) {
-                    return sorter_settings.descending ? (a.population > b.population) : (a.population < b.population);
+                cmp_fn = [=](const City &a, const City &b) {
+                    return is_descending ? (a.population > b.population) : (a.population < b.population);
                 };
                 break;
             }
@@ -490,11 +556,12 @@ int main(const int argc, char *argv[]) {
 
     SorterFactory<City> sorter_factory(sorter_settings);
 
-    const auto sorter = sorter_factory.createSorter();
+    const auto sorter_std = sorter_factory.createSorter();
 
-    if (sorter != nullptr) {
-        sorter->sort(data);
-        sorter->print_sorted_data(data);
+    if (sorter_std != nullptr) {
+        const auto time = sorter_std->benchmark_sort_duration(data, 1000);
+        std::cout << "Average Time: " << time.count() << " ms" << std::endl;
+        // sorter_std->print_sorted_data(data); not used in benchmark
     }
 
     return 0;
